@@ -3,6 +3,7 @@
 const { spawn, spawnSync } = require('child_process');
 const config = require('./config');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 if (!fs.existsSync(config.ASSETS_DIR)) {
@@ -13,9 +14,17 @@ if (!fs.existsSync(config.ASSETS_DIR)) {
 
 let ptcgLive = 'Pokemon TCG Live.exe';
 try {
-    spawnSync('powershell.exe', ['-NoLogo', '-NoProfile', '-ExecutionPolicy', 'RemoteSigned', '-Command', 'using namespace Microsoft.Win32; Add-Type -AssemblyName mscorlib; [Registry]::LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{CF1C9860-7621-43C3-AA53-13A95631CBED}").GetValue("InstallLocation") | Out-File -Encoding UTF8 InstallLocation']);
-    ptcgLive = path.resolve(fs.readFileSync('InstallLocation', { encoding: 'utf8' }).trim(), 'Pokémon Trading Card Game Live\\Pokemon TCG Live.exe');
-    fs.unlinkSync('InstallLocation');
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ptcg-live-zh"));
+    spawnSync('powershell.exe', [
+        '-NoLogo',
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'RemoteSigned',
+        '-Command',
+        'using namespace Microsoft.Win32; Add-Type -AssemblyName mscorlib; [Registry]::LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{CF1C9860-7621-43C3-AA53-13A95631CBED}").GetValue("InstallLocation") | Out-File -Encoding UTF8 InstallLocation'
+    ], { cwd: tempDir });
+    ptcgLive = path.resolve(fs.readFileSync(path.join(tempDir, 'InstallLocation'), { encoding: 'utf8' }).trim(), 'Pokémon Trading Card Game Live\\Pokemon TCG Live.exe');
+    fs.rmSync(tempDir, { force: true, recursive: true });
 } catch (ex) {
     console.error(ex);
 }
@@ -33,7 +42,7 @@ try {
         env: {
             ...process.env,
             HTTPS_PROXY: 'http://127.0.0.1:' + config.HTTPS_PROXY_SERVER_PORT,
-            NO_PROXY: 'insights-collector.newrelic.com',
+            NO_PROXY: 'access.pokemon.com, insights-collector.newrelic.com',
         },
     }).on('close', () => {
         process.exit();
