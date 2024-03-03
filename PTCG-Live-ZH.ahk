@@ -1,5 +1,5 @@
 ;@Ahk2Exe-Let APP_NAME = PTCG-Live-ZH
-;@Ahk2Exe-Let APP_VERSION = 1.3.0.0
+;@Ahk2Exe-Let APP_VERSION = 1.4.0.0
 ;@Ahk2Exe-ExeName %U_APP_NAME%_%U_APP_VERSION%.exe
 ;@Ahk2Exe-SetCopyright Copyright © 2024 Hill-98@GitHub
 ;@Ahk2Exe-SetDescription %U_APP_NAME%
@@ -49,14 +49,8 @@ main_compiled() {
     }
 
     if (self_version != old_version) {
-        try {
-            FileWrite(RESOURCES_DIR . "\version", self_version)
-        } catch Error {
-        }
-        try {
-            FileWrite(A_ScriptDir . "\debug.bat", "@ECHO OFF`r`n.\resources\node.exe .\resources\start.js`r`nPAUSE > NUL")
-        } catch Error {
-        }
+        FileWrite(RESOURCES_DIR . "\version", self_version)
+        FileWrite(A_ScriptDir . "\debug.bat", "@ECHO OFF`r`n.\resources\node.exe .\resources\start.js`r`nPAUSE > NUL")
         FileInstall("cdn-studio-prod.pokemon.com.crt", RESOURCES_DIR . "\cdn-studio-prod.pokemon.com.crt", 1)
         FileInstall("cdn-studio-prod.pokemon.com.key", RESOURCES_DIR . "\cdn-studio-prod.pokemon.com.key", 1)
         FileInstall("config.js", RESOURCES_DIR . "\config.js", 1)
@@ -76,21 +70,30 @@ FileWrite(file, text) {
 }
 
 if (A_IsCompiled) {
-    main_compiled()
+    try {
+        main_compiled()
+    } catch Error {
+        if (!A_IsAdmin) {
+            Run("*RunAs `"" . A_ScriptFullPath . "`"", A_ScriptDir)
+            Exit(0)
+        }
+        MsgBox("脚本资源初始化失败！", "PTCG Live 汉化版", 0x10)
+        Exit(3)
+    }
 }
 
 if (!install_cert()) {
-    MsgBox("SSL 证书安装失败，请尝试手动安装。", "PTCG Live 汉化版")
+    MsgBox("SSL 证书安装失败，请尝试手动安装。", "PTCG Live 汉化版", 0x10)
     Exit(2)
 }
 
 if (ProcessExist("Pokemon TCG Live.exe")) {
-    MsgBox("检测到 Pokemon TCG Live 正在运行，请先关闭游戏再运行此程序。", "PTCG Live 汉化版")
+    MsgBox("检测到 Pokemon TCG Live 正在运行，请先关闭游戏再运行此程序。", "PTCG Live 汉化版", 0x30)
     Exit(1)
 }
 
 try {
     Run("`"" . RESOURCES_DIR . "\node.exe`" `"" . RESOURCES_DIR . "\start.js`"", A_ScriptDir)
 } catch Error {
-    MsgBox("汉化脚本运行失败。")
+    MsgBox("汉化脚本运行失败！", "PTCG Live 汉化版", 0x10)
 }
