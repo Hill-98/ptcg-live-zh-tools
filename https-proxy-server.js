@@ -96,13 +96,10 @@ class ProxyClient extends events {
      * @param {Number} port
      */
     handleReqest(headers, host, port) {
-        const _host = host === 'cdn.studio-prod.pokemon.com' ? '127.0.0.1' : host;
-        const _port = host === 'cdn.studio-prod.pokemon.com' ? config.CDN_HTTPS_SERVER_PORT : port;
-
-        const remote = formatRemote(_host, _port);
+        const remote = formatRemote(host, port);
         const server = net.connect({
-            host: _host,
-            port: _port,
+            host: host === 'cdn.studio-prod.pokemon.com' ? '127.0.0.1' : host,
+            port: host === 'cdn.studio-prod.pokemon.com' ? config.CDN_HTTPS_SERVER_PORT : port,
             keepAlive: headers['Proxy-Connection'] === 'Keep-Alive',
             timeout: 60,
         });
@@ -127,7 +124,7 @@ class ProxyClient extends events {
         server.once('close', (handError) => {
             server.removeAllListeners();
             this.#socket.destroy();
-            console.log(`${remote} disconnected(error: ${handError})`);
+            console.log(`${remote} disconnected (error: ${handError})`);
         });
 
         this.#socket.once('close', () => {
@@ -143,7 +140,7 @@ class ProxyClient extends events {
         this.#socket.removeAllListeners();
         this.removeAllListeners();
 
-        console.log(`${this.remote} disconnected(error: ${handError})`);
+        console.log(`${this.remote} disconnected (error: ${handError})`);
 
         this.#socket.destroy();
     }
