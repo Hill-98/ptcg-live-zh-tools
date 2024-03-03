@@ -1,5 +1,5 @@
 ;@Ahk2Exe-Let APP_NAME = PTCG-Live-ZH
-;@Ahk2Exe-Let APP_VERSION = 1.4.0.0
+;@Ahk2Exe-Let APP_VERSION = 1.5.0.0
 ;@Ahk2Exe-ExeName %U_APP_NAME%_%U_APP_VERSION%.exe
 ;@Ahk2Exe-SetCopyright Copyright © 2024 Hill-98@GitHub
 ;@Ahk2Exe-SetDescription %U_APP_NAME%
@@ -10,9 +10,11 @@
 ;@Ahk2Exe-SetProductName %U_APP_NAME%
 ;@Ahk2Exe-SetVersion %U_APP_VERSION%
 
+#NoTrayIcon
 #SingleInstance Force
 #Include %A_ScriptDir%
 
+PID_FILE := A_Temp . "\" . A_ScriptName . ".pid"
 RESOURCES_DIR := A_IsCompiled ? A_ScriptDir . "\resources" : A_ScriptDir
 
 install_cert() {
@@ -87,13 +89,42 @@ if (!install_cert()) {
     Exit(2)
 }
 
-if (ProcessExist("Pokemon TCG Live.exe")) {
-    MsgBox("检测到 Pokemon TCG Live 正在运行，请先关闭游戏再运行此程序。", "PTCG Live 汉化版", 0x30)
+running := false
+
+if (FileExist(PID_FILE)) {
+    try {
+    pid := FileRead(PID_FILE)
+    running := ProcessExist(pid)
+    } catch Error {
+    }
+}
+
+if (running) {
+    if (MsgBox("检测到汉化脚本已经在运行中，是否要强制结束汉化脚本进程并重新运行？", "PTCG Live 汉化版", 0x4 + 0x20) == "Yes") {
+        ProcessClose(pid)
+        running := false
+    }
+} else if (ProcessExist("Pokemon TCG Live.exe")) {
+    MsgBox("检测到 Pokemon TCG Live 正在运行，请先关闭游戏再运行本程序。", "PTCG Live 汉化版", 0x30)
     Exit(1)
 }
 
-try {
-    Run("`"" . RESOURCES_DIR . "\node.exe`" `"" . RESOURCES_DIR . "\start.js`"", A_ScriptDir)
-} catch Error {
-    MsgBox("汉化脚本运行失败！", "PTCG Live 汉化版", 0x10)
+if (!running) {
+    try {
+        Run("`"" . RESOURCES_DIR . "\node.exe`" `"" . RESOURCES_DIR . "\start.js`"", A_ScriptDir, , &pid)
+    } catch Error {
+        MsgBox("汉化脚本运行失败！", "PTCG Live 汉化版", 0x10)
+        Exit(4)
+    }
 }
+
+try {
+    FileWrite(PID_FILE, pid)
+} catch Error {
+}
+
+while (ProcessExist(pid)) {
+    Sleep(1000)
+}
+
+FileDelete(PID_FILE)

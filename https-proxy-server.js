@@ -299,5 +299,19 @@ httpProxyServer.on('connection', (socket) => {
     });
 });
 
-cdnHttpsServer.listen(config.CDN_HTTPS_SERVER_PORT);
-httpProxyServer.listen(config.HTTPS_PROXY_SERVER_PORT);
+module.exports = {
+    start() {
+        return Promise.all([
+            new Promise((resolve, reject) => {
+                cdnHttpsServer.listen(config.CDN_HTTPS_SERVER_PORT);
+                cdnHttpsServer.once('listening', resolve);
+                cdnHttpsServer.once('error', reject);
+            }),
+            new Promise((resolve, reject) => {
+                httpProxyServer.listen(config.HTTPS_PROXY_SERVER_PORT);
+                httpProxyServer.once('listening', resolve);
+                httpProxyServer.once('error', reject);
+            }),
+        ]);
+    },
+};
