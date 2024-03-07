@@ -2,6 +2,8 @@
 
 Pokémon Trading Card Game Live 中文化工具脚本
 
+Pokémon Trading Card Game Live 最新中文化项目请前往 [Hill98/ptcg-live-zh-mod](https://github.com/Hill-98/ptcg-live-zh-mod)
+
 ## Copyright (版权)
 
 **main.ico** Copyright [icons8](https://icons8.com/)

@@ -93,8 +93,8 @@ running := false
 
 if (FileExist(PID_FILE)) {
     try {
-    pid := FileRead(PID_FILE)
-    running := ProcessExist(pid)
+        pid := FileRead(PID_FILE)
+        running := ProcessExist(pid)
     } catch Error {
     }
 }
